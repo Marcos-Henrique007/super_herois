@@ -1,0 +1,104 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'http_paged_result.dart';
+
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+HttpPagedResult _$HttpPagedResultFromJson(Map<String, dynamic> json) =>
+    HttpPagedResult(
+      first: (json['first'] as num).toInt(),
+      prev: json['prev'],
+      next: json['next'],
+      last: (json['last'] as num).toInt(),
+      pages: (json['pages'] as num).toInt(),
+      items: (json['items'] as num).toInt(),
+      data: (json['data'] as List<dynamic>)
+          .map((e) => HeroEntity.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+
+Map<String, dynamic> _$HttpPagedResultToJson(HttpPagedResult instance) =>
+    <String, dynamic>{
+      'first': instance.first,
+      'prev': instance.prev,
+      'next': instance.next,
+      'last': instance.last,
+      'pages': instance.pages,
+      'items': instance.items,
+      'data': instance.data,
+    };
+
+HeroEntity _$HeroEntityFromJson(Map<String, dynamic> json) => HeroEntity(
+  id: (json['id'] as num).toInt(),
+  name: json['name'] as String,
+  powerstats: PowerstatsEntity.fromJson(
+    json['powerstats'] as Map<String, dynamic>,
+  ),
+  appearance: AppearanceEntity.fromJson(
+    json['appearance'] as Map<String, dynamic>,
+  ),
+  images: ImagesEntity.fromJson(json['images'] as Map<String, dynamic>),
+);
+
+Map<String, dynamic> _$HeroEntityToJson(HeroEntity instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'powerstats': instance.powerstats,
+      'appearance': instance.appearance,
+      'images': instance.images,
+    };
+
+PowerstatsEntity _$PowerstatsEntityFromJson(Map<String, dynamic> json) =>
+    PowerstatsEntity(
+      intelligence: (json['intelligence'] as num).toInt(),
+      strength: (json['strength'] as num).toInt(),
+      speed: (json['speed'] as num).toInt(),
+      durability: (json['durability'] as num).toInt(),
+      power: (json['power'] as num).toInt(),
+      combat: (json['combat'] as num).toInt(),
+    );
+
+Map<String, dynamic> _$PowerstatsEntityToJson(PowerstatsEntity instance) =>
+    <String, dynamic>{
+      'intelligence': instance.intelligence,
+      'strength': instance.strength,
+      'speed': instance.speed,
+      'durability': instance.durability,
+      'power': instance.power,
+      'combat': instance.combat,
+    };
+
+AppearanceEntity _$AppearanceEntityFromJson(
+  Map<String, dynamic> json,
+) => AppearanceEntity(
+  gender: json['gender'] as String,
+  race: json['race'] as String?,
+  height: (json['height'] as List<dynamic>).map((e) => e as String).toList(),
+  weight: (json['weight'] as List<dynamic>).map((e) => e as String).toList(),
+);
+
+Map<String, dynamic> _$AppearanceEntityToJson(AppearanceEntity instance) =>
+    <String, dynamic>{
+      'gender': instance.gender,
+      'race': instance.race,
+      'height': instance.height,
+      'weight': instance.weight,
+    };
+
+ImagesEntity _$ImagesEntityFromJson(Map<String, dynamic> json) => ImagesEntity(
+  xs: json['xs'] as String,
+  sm: json['sm'] as String,
+  md: json['md'] as String,
+  lg: json['lg'] as String,
+);
+
+Map<String, dynamic> _$ImagesEntityToJson(ImagesEntity instance) =>
+    <String, dynamic>{
+      'xs': instance.xs,
+      'sm': instance.sm,
+      'md': instance.md,
+      'lg': instance.lg,
+    };

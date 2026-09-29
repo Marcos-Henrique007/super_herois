@@ -1,38 +1,28 @@
-class Hero {
-  //Atributos de identificações:
-  final int id;
-  final String name;
-  final String image;
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-  //Atributos de habilidades:
-  final int intelligence;
-  final int strength;
-  final int speed;
-  final int durability;
-  final int power;
-  final int combat;
+part 'hero.freezed.dart';
 
-  //Atributos de gênero:
-  final String gender;
-  final String race;
+// Modelo principal usado pelas telas e regras de negócio do aplicativo.
+@freezed
+abstract class Hero with _$Hero {
+  const factory Hero({
+    // Dados de identificação.
+    required int id,
+    required String name,
+    required String image,
 
-  //Lista
-  final List<String> height;
-  final List<String> weight;
+    // Atributos utilizados nas missões.
+    required int intelligence,
+    required int strength,
+    required int speed,
+    required int durability,
+    required int power,
+    required int combat,
 
-  const Hero({
-    required this.id,
-    required this.name,
-    required this.image,
-    required this.intelligence,
-    required this.strength,
-    required this.speed,
-    required this.durability,
-    required this.power,
-    required this.combat,
-    required this.gender,
-    required this.race,
-    required this.height,
-    required this.weight,
-  });
+    // Informações físicas.
+    required String gender,
+    required String race,
+    required List<String> height,
+    required List<String> weight,
+  }) = _Hero;
 }
