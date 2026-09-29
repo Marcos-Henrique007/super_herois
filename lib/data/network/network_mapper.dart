@@ -3,16 +3,20 @@ import '../../domain/hero.dart';
 import 'entity/http_paged_result.dart';
 
 class NetworkMapper {
-  // Converte um HeroEntity da API para o modelo Hero usado no aplicativo.
+  //Converte HeroEntity para Hero:
   Hero toHero(HeroEntity entity) {
     try {
       return Hero(
-        // Informações básicas do herói.
+        //Identificação:
         id: entity.id,
         name: entity.name,
-        image: entity.images.md,
+        slug: entity.slug,
 
-        // Atributos de combate.
+        //Imagens:
+        image: entity.images.md,
+        largeImage: entity.images.lg,
+
+        //Atributos:
         intelligence: entity.powerstats.intelligence,
         strength: entity.powerstats.strength,
         speed: entity.powerstats.speed,
@@ -20,27 +24,44 @@ class NetworkMapper {
         power: entity.powerstats.power,
         combat: entity.powerstats.combat,
 
-        // Informações de aparência.
+        //Aparência:
         gender: entity.appearance.gender,
         race: entity.appearance.race ?? 'Desconhecida',
-
-        // Altura e peso vêm como listas na API.
         height: entity.appearance.height,
         weight: entity.appearance.weight,
+        eyeColor: entity.appearance.eyeColor,
+        hairColor: entity.appearance.hairColor,
+
+        //Biografia:
+        fullName: entity.biography.fullName,
+        alterEgos: entity.biography.alterEgos,
+        aliases: entity.biography.aliases,
+        placeOfBirth: entity.biography.placeOfBirth,
+        firstAppearance: entity.biography.firstAppearance,
+        publisher: entity.biography.publisher ?? 'Desconhecido',
+        alignment: entity.biography.alignment,
+
+        //Trabalho:
+        occupation: entity.work.occupation,
+        base: entity.work.base,
+
+        //Conexões:
+        groupAffiliation: entity.connections.groupAffiliation,
+        relatives: entity.connections.relatives,
       );
     } catch (e) {
-      // Caso ocorra erro na conversão, lança uma exceção de mapper.
+      //Erro durante a conversão:
       throw MapperException<HeroEntity, Hero>(
         e.toString(),
       );
     }
   }
 
-  // Converte uma lista de HeroEntity em uma lista de Hero.
+  //Converte uma lista de HeroEntity para Hero:
   List<Hero> toHeroes(List<HeroEntity> entities) {
     final List<Hero> heroes = [];
 
-    // Percorre cada entidade recebida da API.
+    //Percorre as entidades recebidas:
     for (var heroEntity in entities) {
       heroes.add(toHero(heroEntity));
     }
