@@ -31,7 +31,7 @@ Map<String, dynamic> _$HttpPagedResultToJson(HttpPagedResult instance) =>
     };
 
 HeroEntity _$HeroEntityFromJson(Map<String, dynamic> json) => HeroEntity(
-  id: (json['id'] as num).toInt(),
+  id: json['id'] as String,
   name: json['name'] as String,
   slug: json['slug'] as String,
   powerstats: PowerstatsEntity.fromJson(
