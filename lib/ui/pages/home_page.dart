@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'agents_page.dart';
+
 class HomePage extends StatelessWidget {
   const HomePage({
     super.key,
@@ -14,9 +16,23 @@ class HomePage extends StatelessWidget {
           'Central de Heróis',
         ),
       ),
-      body: const Center(
-        child: Text(
-          'Home Page',
+
+      body: Center(
+        child: ElevatedButton(
+          //Abre a tela de agentes:
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                const AgentsPage(),
+              ),
+            );
+          },
+
+          child: const Text(
+            'Agentes',
+          ),
         ),
       ),
     );
