@@ -54,4 +54,41 @@ class HeroRepositoryImpl implements HeroRepository {
 
     return heroes;
   }
+
+  @override
+  Future<Hero> getHeroById({
+    required int id,
+  }) async {
+
+    //Tenta carregar o herói do banco:
+    final dbEntity = await heroDao.selectById(
+      id,
+    );
+
+    //Se o herói já existe no banco, retorna o cache:
+    if (dbEntity != null) {
+      return databaseMapper.toHero(
+        dbEntity,
+      );
+    }
+
+    //Caso contrário, busca pela API:
+    final networkEntity = await apiClient.getHeroById(
+      id: id,
+    );
+
+    //Converte o HeroEntity para Hero:
+    final hero = networkMapper.toHero(
+      networkEntity,
+    );
+
+    //Salva o herói no banco local:
+    await heroDao.insert(
+      databaseMapper.toHeroDatabaseEntity(
+        hero,
+      ),
+    );
+
+    return hero;
+  }
 }

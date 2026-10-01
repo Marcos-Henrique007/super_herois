@@ -6,20 +6,21 @@ import '../entity/http_paged_result.dart';
 class ApiClient {
   late final Dio _dio;
 
-  // Configura o cliente responsável pelas requisições HTTP.
-  ApiClient({required String baseUrl}) {
+  //Configura o cliente das requisições:
+  ApiClient({
+    required String baseUrl,
+  }) {
     _dio = Dio()
       ..options.baseUrl = baseUrl
       ..interceptors.add(
         LogInterceptor(
-          // Exibe informações das requisições no terminal.
           requestBody: true,
           responseBody: true,
         ),
       );
   }
 
-  // Busca uma página de heróis no servidor.
+  //Busca uma página de heróis:
   Future<List<HeroEntity>> getHeroes({
     required int page,
     required int limit,
@@ -27,33 +28,53 @@ class ApiClient {
     final response = await _dio.get(
       '/heroes',
       queryParameters: {
-        // Número da página solicitada.
         '_page': page,
-
-        // Quantidade de heróis por página.
         '_per_page': limit,
       },
     );
 
-    // Verifica se o servidor retornou algum erro HTTP.
-    if (response.statusCode != null && response.statusCode! >= 400) {
+    if (response.statusCode != null &&
+        response.statusCode! >= 400) {
       throw NetworkException(
         statusCode: response.statusCode!,
         message: response.statusMessage,
       );
-    }
-
-    // Se recebeu uma resposta válida, converte o JSON.
-    if (response.statusCode != null) {
+    } else if (response.statusCode != null) {
       final HttpPagedResult receivedData =
       HttpPagedResult.fromJson(
         response.data as Map<String, dynamic>,
       );
 
       return receivedData.data;
+    } else {
+      throw Exception(
+        'Erro desconhecido.',
+      );
     }
+  }
 
-    // Caso não exista código de resposta.
-    throw Exception('Erro desconhecido.');
+  //Busca um herói pelo ID:
+  Future<HeroEntity> getHeroById({
+    required int id,
+  }) async {
+    final response = await _dio.get(
+      '/heroes/$id',
+    );
+
+    if (response.statusCode != null &&
+        response.statusCode! >= 400) {
+      throw NetworkException(
+        statusCode: response.statusCode!,
+        message: response.statusMessage,
+      );
+    } else if (response.statusCode != null) {
+      return HeroEntity.fromJson(
+        response.data as Map<String, dynamic>,
+      );
+    } else {
+      throw Exception(
+        'Erro desconhecido.',
+      );
+    }
   }
 }
