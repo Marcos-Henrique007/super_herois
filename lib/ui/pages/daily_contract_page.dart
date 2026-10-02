@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../data/repository/hero_repository_impl.dart';
+import '../../data/repository/squad_repository_impl.dart';
 import '../../domain/hero.dart';
 import '../widgets/hero_card.dart';
 
@@ -21,7 +22,7 @@ class DailyContractPage extends StatefulWidget {
 class _DailyContractPageState
     extends State<DailyContractPage> {
 
-  //Chaves utilizadas no SharedPreferences:
+  //Chaves do SharedPreferences:
   static const String _heroIdKey =
       'daily_hero_id';
 
@@ -31,14 +32,23 @@ class _DailyContractPageState
   //Quantidade de heróis disponíveis:
   static const int _totalHeroes = 563;
 
-  //Repositório:
+  //Repositório dos heróis:
   late final HeroRepositoryImpl heroesRepo;
+
+  //Repositório do esquadrão:
+  late final SquadRepositoryImpl squadRepo;
 
   //Herói sorteado:
   Hero? dailyHero;
 
+  //Indica se o herói já foi recrutado:
+  bool isRecruited = false;
+
   //Controle de carregamento:
   bool isLoading = true;
+
+  //Controle do recrutamento:
+  bool isRecruiting = false;
 
   //Mensagem de erro:
   String? errorMessage;
@@ -47,9 +57,16 @@ class _DailyContractPageState
   void initState() {
     super.initState();
 
-    //Recupera o repository pelo Provider:
+    //Recupera o repositório dos heróis:
     heroesRepo =
         Provider.of<HeroRepositoryImpl>(
+          context,
+          listen: false,
+        );
+
+    //Recupera o repositório do esquadrão:
+    squadRepo =
+        Provider.of<SquadRepositoryImpl>(
           context,
           listen: false,
         );
@@ -71,12 +88,13 @@ class _DailyContractPageState
               .split('T')
               .first;
 
-      //Busca os dados salvos:
+      //Busca a data salva:
       final savedDate =
       preferences.getString(
         _heroDateKey,
       );
 
+      //Busca o ID salvo:
       final savedHeroId =
       preferences.getInt(
         _heroIdKey,
@@ -118,6 +136,12 @@ class _DailyContractPageState
         id: heroId,
       );
 
+      //Verifica se o agente já foi recrutado:
+      final recruited =
+      await squadRepo.isRecruited(
+        heroId: hero.id,
+      );
+
       if (!mounted) {
         return;
       }
@@ -125,6 +149,7 @@ class _DailyContractPageState
       //Atualiza a tela:
       setState(() {
         dailyHero = hero;
+        isRecruited = recruited;
         isLoading = false;
       });
     } catch (e) {
@@ -137,6 +162,119 @@ class _DailyContractPageState
         errorMessage = e.toString();
         isLoading = false;
       });
+    }
+  }
+
+  //Recruta o agente:
+  Future<void> _recruitHero() async {
+    if (dailyHero == null ||
+        isRecruiting) {
+      return;
+    }
+
+    //Inicia o recrutamento:
+    setState(() {
+      isRecruiting = true;
+    });
+
+    try {
+      //Verifica se já foi recrutado:
+      final recruited =
+      await squadRepo.isRecruited(
+        heroId: dailyHero!.id,
+      );
+
+      if (recruited) {
+        if (!mounted) {
+          return;
+        }
+
+        setState(() {
+          isRecruited = true;
+          isRecruiting = false;
+        });
+
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Este agente já está no esquadrão.',
+            ),
+          ),
+        );
+
+        return;
+      }
+
+      //Busca a quantidade de agentes:
+      final count =
+      await squadRepo.getSquadCount();
+
+      //Verifica o limite do esquadrão:
+      if (count >= 15) {
+        if (!mounted) {
+          return;
+        }
+
+        setState(() {
+          isRecruiting = false;
+        });
+
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Seu esquadrão já possui 15 agentes.',
+            ),
+          ),
+        );
+
+        return;
+      }
+
+      //Recruta o agente:
+      await squadRepo.recruit(
+        hero: dailyHero!,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      //Atualiza o estado do botão:
+      setState(() {
+        isRecruited = true;
+        isRecruiting = false;
+      });
+
+      //Confirma o recrutamento:
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        SnackBar(
+          content: Text(
+            '${dailyHero!.name} foi recrutado!',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      //Finaliza o carregamento:
+      setState(() {
+        isRecruiting = false;
+      });
+
+      //Exibe o erro:
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        SnackBar(
+          content: Text(
+            'Erro ao recrutar agente: $e',
+          ),
+        ),
+      );
     }
   }
 
@@ -167,16 +305,19 @@ class _DailyContractPageState
     //Exibe erro:
     if (errorMessage != null) {
       return Center(
-        child: Text(
-          'Erro ao carregar o contrato.\n$errorMessage',
-          textAlign: TextAlign.center,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            'Erro ao carregar o contrato.\n$errorMessage',
+            textAlign: TextAlign.center,
+          ),
         ),
       );
     }
 
     //Exibe o herói sorteado:
     if (dailyHero != null) {
-      return Padding(
+      return SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
@@ -192,8 +333,40 @@ class _DailyContractPageState
               height: 16,
             ),
 
+            //Exibe o agente sorteado:
             HeroCard(
               hero: dailyHero!,
+            ),
+
+            const SizedBox(
+              height: 20,
+            ),
+
+            //Botão de recrutamento:
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed:
+                isRecruited ||
+                    isRecruiting
+                    ? null
+                    : _recruitHero,
+
+                child: isRecruiting
+                    ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child:
+                  CircularProgressIndicator(
+                    strokeWidth: 2,
+                  ),
+                )
+                    : Text(
+                  isRecruited
+                      ? 'Agente recrutado'
+                      : 'Recrutar',
+                ),
+              ),
             ),
           ],
         ),

@@ -6,6 +6,8 @@ import '../../data/database/database_mapper.dart';
 import '../../data/network/client/api_client.dart';
 import '../../data/network/network_mapper.dart';
 import '../../data/repository/hero_repository_impl.dart';
+import '../../data/database/dao/squad_dao.dart';
+import '../../data/repository/squad_repository_impl.dart';
 
 class ConfigureProviders {
   final List<SingleChildWidget> providers;
@@ -28,12 +30,22 @@ class ConfigureProviders {
     //Acesso ao banco:
     final hero_dao = HeroDao();
 
+    //Acesso ao esquadrão:
+    final squad_dao = SquadDao();
+
     //Repositório:
     final heroes_repository = HeroRepositoryImpl(
       apiClient: api_client,
       networkMapper: network_mapper,
       databaseMapper: database_mapper,
       heroDao: hero_dao,
+    );
+
+    //Repositório do esquadrão:
+    final squad_repository = SquadRepositoryImpl(
+      squadDao: squad_dao,
+      heroDao: hero_dao,
+      databaseMapper: database_mapper,
     );
 
     //Providers da aplicação:
@@ -53,6 +65,13 @@ class ConfigureProviders {
         ),
         Provider<HeroRepositoryImpl>.value(
           value: heroes_repository,
+        ),
+        Provider<SquadDao>.value(
+          value: squad_dao,
+        ),
+
+        Provider<SquadRepositoryImpl>.value(
+          value: squad_repository,
         ),
       ],
     );
