@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'agents_page.dart';
 import 'daily_contract_page.dart';
+import 'squad_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({
@@ -55,6 +56,26 @@ class HomePage extends StatelessWidget {
               },
               child: const Text(
                 'Contrato Diário',
+              ),
+            ),
+
+            const SizedBox(
+              height: 16,
+            ),
+
+            ElevatedButton(
+              //Abre o esquadrão:
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                    const SquadPage(),
+                  ),
+                );
+              },
+              child: const Text(
+                'Meu Esquadrão',
               ),
             ),
           ],
