@@ -1,15 +1,22 @@
+import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart' hide Hero;
 import 'package:primer_progress_bar/primer_progress_bar.dart';
+import 'package:provider/provider.dart';
 
+import '../../data/repository/squad_repository_impl.dart';
 import '../../domain/hero.dart';
 
 class HeroDetailsPage extends StatelessWidget {
   final Hero hero;
 
+  //Define se pode dispensar o agente:
+  final bool canDismiss;
+
   const HeroDetailsPage({
     super.key,
     required this.hero,
+    this.canDismiss = false,
   });
 
   //Cria a barra de atributo:
@@ -19,17 +26,24 @@ class HeroDetailsPage extends StatelessWidget {
       int value,
       ) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(
+        bottom: 12,
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+        CrossAxisAlignment.start,
         children: [
           //Nome e valor do atributo:
           Text(
             '$name: $value',
-            style: Theme.of(context).textTheme.titleSmall,
+            style: Theme.of(context)
+                .textTheme
+                .titleSmall,
           ),
 
-          const SizedBox(height: 5),
+          const SizedBox(
+            height: 5,
+          ),
 
           //Barra do atributo:
           PrimerProgressBar(
@@ -38,9 +52,13 @@ class HeroDetailsPage extends StatelessWidget {
             segments: [
               Segment(
                 value: value,
-                color: Theme.of(context).colorScheme.primary,
+                color: Theme.of(context)
+                    .colorScheme
+                    .primary,
                 label: Text(name),
-                valueLabel: Text('$value'),
+                valueLabel: Text(
+                  '$value',
+                ),
               ),
             ],
           ),
@@ -55,11 +73,56 @@ class HeroDetailsPage extends StatelessWidget {
       String value,
       ) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(
+        bottom: 8,
+      ),
       child: Text(
         '$title: $value',
       ),
     );
+  }
+
+  //Confirma a dispensa do agente:
+  void _showDismissDialog(
+      BuildContext context,
+      ) {
+    AwesomeDialog(
+      context: context,
+      dialogType: DialogType.warning,
+      animType: AnimType.scale,
+      title: 'Dispensar agente',
+      desc:
+      'Deseja realmente dispensar ${hero.name}?',
+      btnCancelText: 'Cancelar',
+      btnOkText: 'Dispensar',
+
+      //Cancela a operação:
+      btnCancelOnPress: () {},
+
+      //Dispensa o agente:
+      btnOkOnPress: () async {
+        final squadRepo =
+        Provider.of<SquadRepositoryImpl>(
+          context,
+          listen: false,
+        );
+
+        //Remove o agente do esquadrão:
+        await squadRepo.dismiss(
+          heroId: hero.id,
+        );
+
+        if (!context.mounted) {
+          return;
+        }
+
+        //Retorna informando a remoção:
+        Navigator.pop(
+          context,
+          true,
+        );
+      },
+    ).show();
   }
 
   @override
@@ -67,41 +130,58 @@ class HeroDetailsPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         //Nome do herói:
-        title: Text(hero.name),
+        title: Text(
+          hero.name,
+        ),
       ),
 
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(
+          16,
+        ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment:
+          CrossAxisAlignment.start,
           children: [
             //Imagem principal:
             Center(
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius:
+                BorderRadius.circular(
+                  12,
+                ),
                 child: CachedNetworkImage(
-                  imageUrl: hero.largeImage,
+                  imageUrl:
+                  hero.largeImage,
                   width: 250,
                   height: 350,
                   fit: BoxFit.cover,
 
                   //Carregamento da imagem:
-                  placeholder: (context, url) =>
+                  placeholder:
+                      (context, url) =>
                   const SizedBox(
                     width: 250,
                     height: 350,
                     child: Center(
-                      child: CircularProgressIndicator(),
+                      child:
+                      CircularProgressIndicator(),
                     ),
                   ),
 
                   //Erro ao carregar a imagem:
-                  errorWidget: (context, url, error) =>
+                  errorWidget:
+                      (
+                      context,
+                      url,
+                      error,
+                      ) =>
                   const SizedBox(
                     width: 250,
                     height: 350,
                     child: Icon(
-                      Icons.image_not_supported,
+                      Icons
+                          .image_not_supported,
                       size: 80,
                     ),
                   ),
@@ -109,7 +189,9 @@ class HeroDetailsPage extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(
+              height: 20,
+            ),
 
             //Nome:
             Text(
@@ -119,7 +201,9 @@ class HeroDetailsPage extends StatelessWidget {
                   .headlineMedium,
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(
+              height: 20,
+            ),
 
             //Atributos:
             Text(
@@ -129,7 +213,9 @@ class HeroDetailsPage extends StatelessWidget {
                   .titleLarge,
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(
+              height: 12,
+            ),
 
             _buildPowerStat(
               context,
@@ -167,7 +253,9 @@ class HeroDetailsPage extends StatelessWidget {
               hero.combat,
             ),
 
-            const Divider(height: 32),
+            const Divider(
+              height: 32,
+            ),
 
             //Aparência:
             Text(
@@ -177,7 +265,9 @@ class HeroDetailsPage extends StatelessWidget {
                   .titleLarge,
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(
+              height: 12,
+            ),
 
             _buildInformation(
               'Gênero',
@@ -191,12 +281,16 @@ class HeroDetailsPage extends StatelessWidget {
 
             _buildInformation(
               'Altura',
-              hero.height.join(' / '),
+              hero.height.join(
+                ' / ',
+              ),
             ),
 
             _buildInformation(
               'Peso',
-              hero.weight.join(' / '),
+              hero.weight.join(
+                ' / ',
+              ),
             ),
 
             _buildInformation(
@@ -209,7 +303,9 @@ class HeroDetailsPage extends StatelessWidget {
               hero.hairColor,
             ),
 
-            const Divider(height: 32),
+            const Divider(
+              height: 32,
+            ),
 
             //Biografia:
             Text(
@@ -219,7 +315,9 @@ class HeroDetailsPage extends StatelessWidget {
                   .titleLarge,
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(
+              height: 12,
+            ),
 
             _buildInformation(
               'Nome completo',
@@ -233,7 +331,9 @@ class HeroDetailsPage extends StatelessWidget {
 
             _buildInformation(
               'Apelidos',
-              hero.aliases.join(', '),
+              hero.aliases.join(
+                ', ',
+              ),
             ),
 
             _buildInformation(
@@ -256,7 +356,9 @@ class HeroDetailsPage extends StatelessWidget {
               hero.alignment,
             ),
 
-            const Divider(height: 32),
+            const Divider(
+              height: 32,
+            ),
 
             //Trabalho:
             Text(
@@ -266,7 +368,9 @@ class HeroDetailsPage extends StatelessWidget {
                   .titleLarge,
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(
+              height: 12,
+            ),
 
             _buildInformation(
               'Ocupação',
@@ -278,7 +382,9 @@ class HeroDetailsPage extends StatelessWidget {
               hero.base,
             ),
 
-            const Divider(height: 32),
+            const Divider(
+              height: 32,
+            ),
 
             //Conexões:
             Text(
@@ -288,7 +394,9 @@ class HeroDetailsPage extends StatelessWidget {
                   .titleLarge,
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(
+              height: 12,
+            ),
 
             _buildInformation(
               'Grupos',
@@ -299,6 +407,33 @@ class HeroDetailsPage extends StatelessWidget {
               'Parentes',
               hero.relatives,
             ),
+
+            //Botão de dispensa:
+            if (canDismiss) ...[
+              const SizedBox(
+                height: 24,
+              ),
+
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  //Solicita a dispensa do agente:
+                  onPressed: () {
+                    _showDismissDialog(
+                      context,
+                    );
+                  },
+
+                  child: const Text(
+                    'Dispensar agente',
+                  ),
+                ),
+              ),
+
+              const SizedBox(
+                height: 16,
+              ),
+            ],
           ],
         ),
       ),

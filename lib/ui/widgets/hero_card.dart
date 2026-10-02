@@ -7,9 +7,13 @@ import '../pages/hero_details_page.dart';
 class HeroCard extends StatelessWidget {
   final Hero hero;
 
+  //Ação personalizada ao clicar:
+  final VoidCallback? onTap;
+
   const HeroCard({
     super.key,
     required this.hero,
+    this.onTap,
   });
 
   @override
@@ -19,17 +23,19 @@ class HeroCard extends StatelessWidget {
 
       //Permite clicar no card:
       child: InkWell(
-        //Abre os detalhes do herói:
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => HeroDetailsPage(
-                hero: hero,
-              ),
-            ),
-          );
-        },
+        onTap: onTap ??
+                () {
+              //Abre os detalhes do herói:
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      HeroDetailsPage(
+                        hero: hero,
+                      ),
+                ),
+              );
+            },
 
         child: Row(
           children: [
@@ -40,18 +46,24 @@ class HeroCard extends StatelessWidget {
                 width: 100,
                 height: 150,
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(
+                    10,
+                  ),
                   child: CachedNetworkImage(
                     imageUrl: hero.image,
 
-                    //Exibe carregamento enquanto busca a imagem:
+                    //Exibe carregamento:
                     placeholder: (context, url) =>
                     const Center(
                       child: CircularProgressIndicator(),
                     ),
 
-                    //Exibe ícone caso a imagem falhe:
-                    errorWidget: (context, url, error) =>
+                    //Exibe erro da imagem:
+                    errorWidget: (
+                        context,
+                        url,
+                        error,
+                        ) =>
                     const Icon(
                       Icons.image_not_supported,
                       size: 60,
@@ -66,7 +78,9 @@ class HeroCard extends StatelessWidget {
             //Informações do herói:
             Flexible(
               child: Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(
+                  8,
+                ),
                 child: Column(
                   crossAxisAlignment:
                   CrossAxisAlignment.start,
@@ -80,7 +94,9 @@ class HeroCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
 
-                    const SizedBox(height: 8),
+                    const SizedBox(
+                      height: 8,
+                    ),
 
                     //Principais atributos:
                     Text(
@@ -95,7 +111,9 @@ class HeroCard extends StatelessWidget {
                       'Poder: ${hero.power}',
                     ),
 
-                    const SizedBox(height: 8),
+                    const SizedBox(
+                      height: 8,
+                    ),
 
                     //Informações de aparência:
                     Text(
