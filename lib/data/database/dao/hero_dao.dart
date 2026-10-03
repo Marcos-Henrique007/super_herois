@@ -16,17 +16,17 @@ class HeroDao extends BaseDao {
       HeroDatabaseContract.heroTable,
       limit: limit,
       offset: offset,
-      orderBy: '${HeroDatabaseContract.idColumn} ASC',
+      orderBy:
+      '${HeroDatabaseContract.idColumn} ASC',
     );
 
-    //Converte os registros para HeroDatabaseEntity:
+    //Converte os registros:
     return List.generate(
       maps.length,
-          (index) {
-        return HeroDatabaseEntity.fromJson(
-          maps[index],
-        );
-      },
+          (index) =>
+          HeroDatabaseEntity.fromJson(
+            maps[index],
+          ),
     );
   }
 
@@ -39,8 +39,11 @@ class HeroDao extends BaseDao {
     final List<Map<String, dynamic>> maps =
     await db.query(
       HeroDatabaseContract.heroTable,
-      where: '${HeroDatabaseContract.idColumn} = ?',
-      whereArgs: [id],
+      where:
+      '${HeroDatabaseContract.idColumn} = ?',
+      whereArgs: [
+        id,
+      ],
       limit: 1,
     );
 
@@ -54,7 +57,24 @@ class HeroDao extends BaseDao {
     );
   }
 
-  //Salva um herói no banco:
+  //Retorna a quantidade de heróis salvos:
+  Future<int> count() async {
+    final Database db = await getDb();
+
+    final result = await db.rawQuery(
+      '''
+      SELECT COUNT(*)
+      FROM ${HeroDatabaseContract.heroTable}
+      ''',
+    );
+
+    return Sqflite.firstIntValue(
+      result,
+    ) ??
+        0;
+  }
+
+  //Salva um herói:
   Future<void> insert(
       HeroDatabaseEntity entity,
       ) async {
@@ -64,31 +84,34 @@ class HeroDao extends BaseDao {
       HeroDatabaseContract.heroTable,
       entity.toJson(),
 
-      //Substitui caso o herói já esteja salvo:
-      conflictAlgorithm: ConflictAlgorithm.replace,
+      //Atualiza caso já exista:
+      conflictAlgorithm:
+      ConflictAlgorithm.replace,
     );
   }
 
-  //Salva vários heróis no banco:
+  //Salva vários heróis:
   Future<void> insertAll(
       List<HeroDatabaseEntity> entities,
       ) async {
     final Database db = await getDb();
 
-    //Executa os inserts em uma única transação:
-    await db.transaction((transaction) async {
-      for (final entity in entities) {
-        await transaction.insert(
-          HeroDatabaseContract.heroTable,
-          entity.toJson(),
-          conflictAlgorithm:
-          ConflictAlgorithm.replace,
-        );
-      }
-    });
+    //Executa todos os inserts juntos:
+    await db.transaction(
+          (transaction) async {
+        for (final entity in entities) {
+          await transaction.insert(
+            HeroDatabaseContract.heroTable,
+            entity.toJson(),
+            conflictAlgorithm:
+            ConflictAlgorithm.replace,
+          );
+        }
+      },
+    );
   }
 
-  //Apaga todos os heróis do cache:
+  //Apaga o cache:
   Future<void> deleteAll() async {
     final Database db = await getDb();
 

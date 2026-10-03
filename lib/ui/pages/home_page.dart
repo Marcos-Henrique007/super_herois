@@ -2,13 +2,46 @@ import 'package:flutter/material.dart';
 
 import 'agents_page.dart';
 import 'daily_contract_page.dart';
-import 'squad_page.dart';
 import 'mission_page.dart';
+import 'squad_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({
     super.key,
   });
+
+  //Cria um botão do menu:
+  Widget _buildMenuButton({
+    required String text,
+    required VoidCallback onPressed,
+  }) {
+    return SizedBox(
+      width: 260,
+      height: 55,
+      child: ElevatedButton(
+        onPressed: onPressed,
+
+        //Estilo do botão:
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.green,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(
+              12,
+            ),
+          ),
+        ),
+
+        child: Text(
+          text,
+          style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,14 +51,17 @@ class HomePage extends StatelessWidget {
         title: const Text(
           'Central de Heróis',
         ),
+        centerTitle: true,
       ),
 
       body: Center(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment:
+          MainAxisAlignment.center,
           children: [
-            ElevatedButton(
-              //Abre a tela de agentes:
+            //Tela de agentes:
+            _buildMenuButton(
+              text: 'Agentes',
               onPressed: () {
                 Navigator.push(
                   context,
@@ -35,17 +71,15 @@ class HomePage extends StatelessWidget {
                   ),
                 );
               },
-              child: const Text(
-                'Agentes',
-              ),
             ),
 
             const SizedBox(
               height: 16,
             ),
 
-            ElevatedButton(
-              //Abre o contrato diário:
+            //Contrato diário:
+            _buildMenuButton(
+              text: 'Contrato Diário',
               onPressed: () {
                 Navigator.push(
                   context,
@@ -55,17 +89,15 @@ class HomePage extends StatelessWidget {
                   ),
                 );
               },
-              child: const Text(
-                'Contrato Diário',
-              ),
             ),
 
             const SizedBox(
               height: 16,
             ),
 
-            ElevatedButton(
-              //Abre o esquadrão:
+            //Meu esquadrão:
+            _buildMenuButton(
+              text: 'Meu Esquadrão',
               onPressed: () {
                 Navigator.push(
                   context,
@@ -75,17 +107,15 @@ class HomePage extends StatelessWidget {
                   ),
                 );
               },
-              child: const Text(
-                'Meu Esquadrão',
-              ),
             ),
 
             const SizedBox(
               height: 16,
             ),
 
-            ElevatedButton(
-              //Abre a tela de missões:
+            //Missões:
+            _buildMenuButton(
+              text: 'Missões',
               onPressed: () {
                 Navigator.push(
                   context,
@@ -95,10 +125,6 @@ class HomePage extends StatelessWidget {
                   ),
                 );
               },
-
-              child: const Text(
-                'Missões',
-              ),
             ),
           ],
         ),

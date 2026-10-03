@@ -7,7 +7,7 @@ import '../pages/hero_details_page.dart';
 class HeroCard extends StatelessWidget {
   final Hero hero;
 
-  //Ação personalizada ao clicar:
+  //Ação personalizada:
   final VoidCallback? onTap;
 
   const HeroCard({
@@ -16,16 +16,37 @@ class HeroCard extends StatelessWidget {
     this.onTap,
   });
 
+  //Retorna o maior atributo:
+  MapEntry<String, int> _getBestAttribute() {
+    final attributes = <String, int>{
+      'Inteligência': hero.intelligence,
+      'Força': hero.strength,
+      'Velocidade': hero.speed,
+      'Durabilidade': hero.durability,
+      'Poder': hero.power,
+      'Combate': hero.combat,
+    };
+
+    return attributes.entries.reduce(
+          (current, next) =>
+      current.value >= next.value
+          ? current
+          : next,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    //Busca o maior atributo:
+    final bestAttribute =
+    _getBestAttribute();
+
     return Card(
       elevation: 5,
-
-      //Permite clicar no card:
       child: InkWell(
         onTap: onTap ??
                 () {
-              //Abre os detalhes do herói:
+              //Abre os detalhes:
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -39,46 +60,47 @@ class HeroCard extends StatelessWidget {
 
         child: Row(
           children: [
-            //Imagem do herói:
-            Container(
-              alignment: Alignment.center,
-              child: SizedBox(
-                width: 100,
-                height: 150,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(
-                    10,
+            //Imagem:
+            SizedBox(
+              width: 100,
+              height: 160,
+              child: ClipRRect(
+                borderRadius:
+                BorderRadius.circular(
+                  10,
+                ),
+                child: CachedNetworkImage(
+                  imageUrl: hero.image,
+                  fit: BoxFit.cover,
+
+                  //Carregamento:
+                  placeholder:
+                      (context, url) =>
+                  const Center(
+                    child:
+                    CircularProgressIndicator(),
                   ),
-                  child: CachedNetworkImage(
-                    imageUrl: hero.image,
 
-                    //Exibe carregamento:
-                    placeholder: (context, url) =>
-                    const Center(
-                      child: CircularProgressIndicator(),
-                    ),
-
-                    //Exibe erro da imagem:
-                    errorWidget: (
-                        context,
-                        url,
-                        error,
-                        ) =>
-                    const Icon(
-                      Icons.image_not_supported,
-                      size: 60,
-                    ),
-
-                    fit: BoxFit.cover,
+                  //Erro:
+                  errorWidget:
+                      (
+                      context,
+                      url,
+                      error,
+                      ) =>
+                  const Icon(
+                    Icons.image_not_supported,
+                    size: 60,
                   ),
                 ),
               ),
             ),
 
-            //Informações do herói:
+            //Informações:
             Flexible(
-              child: Container(
-                padding: const EdgeInsets.all(
+              child: Padding(
+                padding:
+                const EdgeInsets.all(
                   8,
                 ),
                 child: Column(
@@ -88,17 +110,19 @@ class HeroCard extends StatelessWidget {
                     //Nome:
                     Text(
                       hero.name,
-                      style: Theme.of(context)
+                      style:
+                      Theme.of(context)
                           .textTheme
                           .titleMedium,
-                      overflow: TextOverflow.ellipsis,
+                      overflow:
+                      TextOverflow.ellipsis,
                     ),
 
                     const SizedBox(
                       height: 8,
                     ),
 
-                    //Principais atributos:
+                    //Powerstats:
                     Text(
                       'Força: ${hero.strength}',
                     ),
@@ -115,7 +139,18 @@ class HeroCard extends StatelessWidget {
                       height: 8,
                     ),
 
-                    //Informações de aparência:
+                    //Maior atributo:
+                    Text(
+                      'Maior atributo: '
+                          '${bestAttribute.key} '
+                          '(${bestAttribute.value})',
+                    ),
+
+                    const SizedBox(
+                      height: 8,
+                    ),
+
+                    //Aparência:
                     Text(
                       'Raça: ${hero.race}',
                     ),

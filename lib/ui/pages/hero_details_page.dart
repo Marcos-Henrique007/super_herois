@@ -47,7 +47,8 @@ class HeroDetailsPage extends StatelessWidget {
 
           //Barra do atributo:
           PrimerProgressBar(
-            maxTotalValue: 100,
+            maxTotalValue:
+            value > 100 ? value: 100,
             showLegend: false,
             segments: [
               Segment(

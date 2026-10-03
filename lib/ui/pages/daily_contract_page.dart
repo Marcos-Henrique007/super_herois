@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart' hide Hero;
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,9 +8,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/repository/hero_repository_impl.dart';
 import '../../data/repository/squad_repository_impl.dart';
 import '../../domain/hero.dart';
-import '../widgets/hero_card.dart';
 
-class DailyContractPage extends StatefulWidget {
+class DailyContractPage
+    extends StatefulWidget {
   const DailyContractPage({
     super.key,
   });
@@ -21,7 +22,6 @@ class DailyContractPage extends StatefulWidget {
 
 class _DailyContractPageState
     extends State<DailyContractPage> {
-
   //Chaves do SharedPreferences:
   static const String _heroIdKey =
       'daily_hero_id';
@@ -29,7 +29,7 @@ class _DailyContractPageState
   static const String _heroDateKey =
       'daily_hero_date';
 
-  //Quantidade de heróis disponíveis:
+  //Quantidade de heróis:
   static const int _totalHeroes = 563;
 
   //Repositório dos heróis:
@@ -38,63 +38,62 @@ class _DailyContractPageState
   //Repositório do esquadrão:
   late final SquadRepositoryImpl squadRepo;
 
-  //Herói sorteado:
+  //Herói do dia:
   Hero? dailyHero;
 
-  //Indica se o herói já foi recrutado:
+  //Indica se já foi recrutado:
   bool isRecruited = false;
 
-  //Controle de carregamento:
+  //Carregamento:
   bool isLoading = true;
 
-  //Controle do recrutamento:
+  //Recrutamento:
   bool isRecruiting = false;
 
-  //Mensagem de erro:
+  //Erro:
   String? errorMessage;
 
   @override
   void initState() {
     super.initState();
 
-    //Recupera o repositório dos heróis:
+    //Recupera os repositórios:
     heroesRepo =
         Provider.of<HeroRepositoryImpl>(
           context,
           listen: false,
         );
 
-    //Recupera o repositório do esquadrão:
     squadRepo =
         Provider.of<SquadRepositoryImpl>(
           context,
           listen: false,
         );
 
-    //Carrega o herói do dia:
+    //Carrega o contrato:
     _loadDailyHero();
   }
 
-  //Carrega ou sorteia o herói diário:
+  //Carrega ou sorteia o herói:
   Future<void> _loadDailyHero() async {
     try {
       final preferences =
-      await SharedPreferences.getInstance();
+      await SharedPreferences
+          .getInstance();
 
-      //Obtém a data atual:
+      //Data atual:
       final today =
           DateTime.now()
               .toIso8601String()
               .split('T')
               .first;
 
-      //Busca a data salva:
+      //Dados salvos:
       final savedDate =
       preferences.getString(
         _heroDateKey,
       );
 
-      //Busca o ID salvo:
       final savedHeroId =
       preferences.getInt(
         _heroIdKey,
@@ -102,14 +101,11 @@ class _DailyContractPageState
 
       int heroId;
 
-      //Verifica se já existe sorteio para hoje:
+      //Mantém o sorteio do dia:
       if (savedDate == today &&
           savedHeroId != null) {
-
-        //Mantém o mesmo herói:
         heroId = savedHeroId;
       } else {
-
         //Sorteia um novo herói:
         heroId =
             Random().nextInt(
@@ -117,26 +113,26 @@ class _DailyContractPageState
             ) +
                 1;
 
-        //Salva a data do sorteio:
+        //Salva a data:
         await preferences.setString(
           _heroDateKey,
           today,
         );
 
-        //Salva o ID sorteado:
+        //Salva o ID:
         await preferences.setInt(
           _heroIdKey,
           heroId,
         );
       }
 
-      //Busca os dados completos do herói:
+      //Busca o herói:
       final hero =
       await heroesRepo.getHeroById(
         id: heroId,
       );
 
-      //Verifica se o agente já foi recrutado:
+      //Verifica se já foi recrutado:
       final recruited =
       await squadRepo.isRecruited(
         heroId: hero.id,
@@ -157,7 +153,6 @@ class _DailyContractPageState
         return;
       }
 
-      //Exibe o erro:
       setState(() {
         errorMessage = e.toString();
         isLoading = false;
@@ -172,13 +167,12 @@ class _DailyContractPageState
       return;
     }
 
-    //Inicia o recrutamento:
     setState(() {
       isRecruiting = true;
     });
 
     try {
-      //Verifica se já foi recrutado:
+      //Verifica duplicidade:
       final recruited =
       await squadRepo.isRecruited(
         heroId: dailyHero!.id,
@@ -206,11 +200,11 @@ class _DailyContractPageState
         return;
       }
 
-      //Busca a quantidade de agentes:
+      //Verifica o limite:
       final count =
-      await squadRepo.getSquadCount();
+      await squadRepo
+          .getSquadCount();
 
-      //Verifica o limite do esquadrão:
       if (count >= 15) {
         if (!mounted) {
           return;
@@ -232,7 +226,7 @@ class _DailyContractPageState
         return;
       }
 
-      //Recruta o agente:
+      //Recruta:
       await squadRepo.recruit(
         hero: dailyHero!,
       );
@@ -241,13 +235,11 @@ class _DailyContractPageState
         return;
       }
 
-      //Atualiza o estado do botão:
       setState(() {
         isRecruited = true;
         isRecruiting = false;
       });
 
-      //Confirma o recrutamento:
       ScaffoldMessenger.of(context)
           .showSnackBar(
         SnackBar(
@@ -261,12 +253,10 @@ class _DailyContractPageState
         return;
       }
 
-      //Finaliza o carregamento:
       setState(() {
         isRecruiting = false;
       });
 
-      //Exibe o erro:
       ScaffoldMessenger.of(context)
           .showSnackBar(
         SnackBar(
@@ -278,11 +268,148 @@ class _DailyContractPageState
     }
   }
 
+  //Cria um atributo:
+  Widget _buildStat(
+      String name,
+      int value,
+      ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: 6,
+      ),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: Colors.grey,
+        ),
+        borderRadius:
+        BorderRadius.circular(
+          10,
+        ),
+      ),
+      child: Text(
+        '$name: $value',
+      ),
+    );
+  }
+
+  //Cria o card diário:
+  Widget _buildDailyCard(
+      Hero hero,
+      ) {
+    return Card(
+      elevation: 5,
+      child: Padding(
+        padding: const EdgeInsets.all(
+          16,
+        ),
+        child: Column(
+          children: [
+            //Imagem:
+            ClipRRect(
+              borderRadius:
+              BorderRadius.circular(
+                12,
+              ),
+              child:
+              CachedNetworkImage(
+                imageUrl:
+                hero.largeImage,
+                width: 220,
+                height: 280,
+                fit: BoxFit.cover,
+
+                placeholder:
+                    (context, url) =>
+                const SizedBox(
+                  width: 220,
+                  height: 280,
+                  child: Center(
+                    child:
+                    CircularProgressIndicator(),
+                  ),
+                ),
+
+                errorWidget:
+                    (
+                    context,
+                    url,
+                    error,
+                    ) =>
+                const SizedBox(
+                  width: 220,
+                  height: 280,
+                  child: Icon(
+                    Icons
+                        .image_not_supported,
+                    size: 70,
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(
+              height: 16,
+            ),
+
+            //Nome:
+            Text(
+              hero.name,
+              style:
+              Theme.of(context)
+                  .textTheme
+                  .headlineSmall,
+            ),
+
+            const SizedBox(
+              height: 16,
+            ),
+
+            //Powerstats:
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              alignment:
+              WrapAlignment.center,
+              children: [
+                _buildStat(
+                  'Inteligência',
+                  hero.intelligence,
+                ),
+                _buildStat(
+                  'Força',
+                  hero.strength,
+                ),
+                _buildStat(
+                  'Velocidade',
+                  hero.speed,
+                ),
+                _buildStat(
+                  'Durabilidade',
+                  hero.durability,
+                ),
+                _buildStat(
+                  'Poder',
+                  hero.power,
+                ),
+                _buildStat(
+                  'Combate',
+                  hero.combat,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+      BuildContext context,
+      ) {
     return Scaffold(
       appBar: AppBar(
-        //Título da tela:
         title: const Text(
           'Contrato Diário',
         ),
@@ -292,40 +419,45 @@ class _DailyContractPageState
     );
   }
 
-  //Monta o conteúdo da tela:
+  //Monta a tela:
   Widget _buildContent() {
-
-    //Exibe o carregamento:
     if (isLoading) {
       return const Center(
-        child: CircularProgressIndicator(),
+        child:
+        CircularProgressIndicator(),
       );
     }
 
-    //Exibe erro:
     if (errorMessage != null) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding:
+          const EdgeInsets.all(
+            16,
+          ),
           child: Text(
             'Erro ao carregar o contrato.\n$errorMessage',
-            textAlign: TextAlign.center,
+            textAlign:
+            TextAlign.center,
           ),
         ),
       );
     }
 
-    //Exibe o herói sorteado:
     if (dailyHero != null) {
       return SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding:
+        const EdgeInsets.all(
+          16,
+        ),
         child: Column(
           children: [
             const Text(
               'Agente disponível hoje',
               style: TextStyle(
                 fontSize: 20,
-                fontWeight: FontWeight.bold,
+                fontWeight:
+                FontWeight.bold,
               ),
             ),
 
@@ -333,38 +465,42 @@ class _DailyContractPageState
               height: 16,
             ),
 
-            //Exibe o agente sorteado:
-            HeroCard(
-              hero: dailyHero!,
+            //Card do contrato:
+            _buildDailyCard(
+              dailyHero!,
             ),
 
             const SizedBox(
               height: 20,
             ),
 
-            //Botão de recrutamento:
+            //Recrutamento:
             SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
+              width:
+              double.infinity,
+              child:
+              ElevatedButton(
                 onPressed:
                 isRecruited ||
                     isRecruiting
                     ? null
                     : _recruitHero,
 
-                child: isRecruiting
+                child:
+                isRecruiting
                     ? const SizedBox(
                   width: 20,
                   height: 20,
                   child:
                   CircularProgressIndicator(
-                    strokeWidth: 2,
+                    strokeWidth:
+                    2,
                   ),
                 )
                     : Text(
                   isRecruited
                       ? 'Agente recrutado'
-                      : 'Recrutar',
+                      : 'Recrutar para o Esquadrão',
                 ),
               ),
             ),
@@ -373,7 +509,6 @@ class _DailyContractPageState
       );
     }
 
-    //Caso nenhum herói seja encontrado:
     return const Center(
       child: Text(
         'Nenhum agente encontrado.',
