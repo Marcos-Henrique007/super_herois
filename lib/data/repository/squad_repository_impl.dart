@@ -87,4 +87,16 @@ class SquadRepositoryImpl implements SquadRepository {
       heroId,
     );
   }
+
+  @override
+  Future<void> updateHero({
+    required Hero hero,
+  }) async {
+    //Atualiza os dados do herói no banco:
+    await heroDao.insert(
+      databaseMapper.toHeroDatabaseEntity(
+        hero,
+      ),
+    );
+  }
 }

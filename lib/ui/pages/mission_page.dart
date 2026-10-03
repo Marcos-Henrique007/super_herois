@@ -26,11 +26,14 @@ class _MissionPageState extends State<MissionPage> {
   //Repositório dos heróis:
   late final HeroRepositoryImpl heroesRepo;
 
-  //Agentes disponíveis:
+  //Agentes do esquadrão:
   List<Hero> squadHeroes = [];
 
   //IDs dos agentes já utilizados:
   final Set<int> usedHeroIds = {};
+
+  //Agentes que venceram rodadas:
+  final List<Hero> winningHeroes = [];
 
   //Quantidade total de rodadas:
   int totalRounds = 0;
@@ -53,19 +56,34 @@ class _MissionPageState extends State<MissionPage> {
   //Inimigo da rodada:
   Hero? enemyHero;
 
+  //Resultado final:
+  bool missionSuccess = false;
+
+  //Agente que recebeu recompensa:
+  Hero? rewardedHero;
+
+  //Atributo melhorado:
+  String? rewardedAttribute;
+
+  //Valor anterior:
+  int? oldAttributeValue;
+
+  //Novo valor:
+  int? newAttributeValue;
+
   //Controle de carregamento:
   bool isLoading = true;
 
-  //Controle da preparação da rodada:
+  //Controle da preparação:
   bool isPreparingRound = false;
 
-  //Indica se a missão foi iniciada:
+  //Indica se a missão iniciou:
   bool missionStarted = false;
 
   //Indica se a missão terminou:
   bool missionFinished = false;
 
-  //Impede selecionar dois agentes:
+  //Impede duas escolhas na rodada:
   bool roundFinished = false;
 
   //Mensagem de erro:
@@ -113,7 +131,7 @@ class _MissionPageState extends State<MissionPage> {
         return;
       }
 
-      //Atualiza os agentes:
+      //Atualiza o esquadrão:
       setState(() {
         squadHeroes = heroes;
         isLoading = false;
@@ -152,8 +170,9 @@ class _MissionPageState extends State<MissionPage> {
     final rounds =
         Random().nextInt(3) + 3;
 
-    //Reinicia os dados da missão:
+    //Limpa os dados anteriores:
     usedHeroIds.clear();
+    winningHeroes.clear();
 
     setState(() {
       totalRounds = rounds;
@@ -162,6 +181,13 @@ class _MissionPageState extends State<MissionPage> {
       wins = 0;
       losses = 0;
       draws = 0;
+
+      missionSuccess = false;
+
+      rewardedHero = null;
+      rewardedAttribute = null;
+      oldAttributeValue = null;
+      newAttributeValue = null;
 
       missionStarted = true;
       missionFinished = false;
@@ -198,7 +224,7 @@ class _MissionPageState extends State<MissionPage> {
         return;
       }
 
-      //Atualiza os dados da rodada:
+      //Atualiza a rodada:
       setState(() {
         dominantAttribute = attribute;
         enemyHero = enemy;
@@ -229,7 +255,7 @@ class _MissionPageState extends State<MissionPage> {
     )
         .toSet();
 
-    //Tenta encontrar um inimigo válido:
+    //Tenta encontrar um inimigo:
     for (
     int attempt = 0;
     attempt < 20;
@@ -246,7 +272,7 @@ class _MissionPageState extends State<MissionPage> {
         limit: 10,
       );
 
-      //Remove quem pertence ao esquadrão:
+      //Remove integrantes do esquadrão:
       final possibleEnemies =
       heroes
           .where(
@@ -257,7 +283,7 @@ class _MissionPageState extends State<MissionPage> {
       )
           .toList();
 
-      //Retorna um inimigo válido:
+      //Retorna um inimigo:
       if (possibleEnemies.isNotEmpty) {
         return possibleEnemies[
         random.nextInt(
@@ -272,7 +298,7 @@ class _MissionPageState extends State<MissionPage> {
     );
   }
 
-  //Retorna o valor do atributo:
+  //Retorna o valor de um atributo:
   int _getAttributeValue(
       Hero hero,
       String attribute,
@@ -301,7 +327,54 @@ class _MissionPageState extends State<MissionPage> {
     }
   }
 
-  //Seleciona um agente para a rodada:
+  //Cria um herói com atributo melhorado:
+  Hero _upgradeAttribute(
+      Hero hero,
+      String attribute,
+      ) {
+    switch (attribute) {
+      case 'Inteligência':
+        return hero.copyWith(
+          intelligence:
+          hero.intelligence + 1,
+        );
+
+      case 'Força':
+        return hero.copyWith(
+          strength:
+          hero.strength + 1,
+        );
+
+      case 'Velocidade':
+        return hero.copyWith(
+          speed:
+          hero.speed + 1,
+        );
+
+      case 'Durabilidade':
+        return hero.copyWith(
+          durability:
+          hero.durability + 1,
+        );
+
+      case 'Poder':
+        return hero.copyWith(
+          power:
+          hero.power + 1,
+        );
+
+      case 'Combate':
+        return hero.copyWith(
+          combat:
+          hero.combat + 1,
+        );
+
+      default:
+        return hero;
+    }
+  }
+
+  //Seleciona um agente:
   void _selectHero(
       Hero hero,
       ) {
@@ -330,7 +403,7 @@ class _MissionPageState extends State<MissionPage> {
       hero.id,
     );
 
-    //Obtém os valores da rodada:
+    //Obtém os valores:
     final heroValue =
     _getAttributeValue(
       hero,
@@ -350,6 +423,11 @@ class _MissionPageState extends State<MissionPage> {
     //Compara os atributos:
     if (heroValue > enemyValue) {
       wins++;
+
+      //Guarda quem venceu:
+      winningHeroes.add(
+        hero,
+      );
 
       resultTitle =
       'Vitória!';
@@ -392,12 +470,12 @@ class _MissionPageState extends State<MissionPage> {
           DialogType.info;
     }
 
-    //Impede outra escolha:
+    //Finaliza a rodada:
     setState(() {
       roundFinished = true;
     });
 
-    //Exibe o resultado da rodada:
+    //Exibe o resultado:
     AwesomeDialog(
       context: context,
       dialogType: dialogType,
@@ -413,13 +491,11 @@ class _MissionPageState extends State<MissionPage> {
     ).show();
   }
 
-  //Avança para a próxima rodada:
+  //Avança a missão:
   void _nextRound() {
-    //Verifica se era a última rodada:
+    //Verifica se era a última:
     if (currentRound >= totalRounds) {
-      setState(() {
-        missionFinished = true;
-      });
+      _finishMission();
 
       return;
     }
@@ -433,11 +509,146 @@ class _MissionPageState extends State<MissionPage> {
     _prepareRound();
   }
 
+  //Finaliza a missão:
+  Future<void> _finishMission() async {
+    //Vitória exige mais da metade das rodadas:
+    final success =
+        wins > totalRounds / 2;
+
+    if (success &&
+        winningHeroes.isNotEmpty) {
+      final random = Random();
+
+      //Sorteia um agente vencedor:
+      final hero =
+      winningHeroes[
+      random.nextInt(
+        winningHeroes.length,
+      )
+      ];
+
+      //Sorteia um atributo:
+      final attribute =
+      attributes[
+      random.nextInt(
+        attributes.length,
+      )
+      ];
+
+      //Valor antigo:
+      final oldValue =
+      _getAttributeValue(
+        hero,
+        attribute,
+      );
+
+      //Aplica a melhoria:
+      final upgradedHero =
+      _upgradeAttribute(
+        hero,
+        attribute,
+      );
+
+      //Valor novo:
+      final newValue =
+      _getAttributeValue(
+        upgradedHero,
+        attribute,
+      );
+
+      //Salva a melhoria no banco:
+      await squadRepo.updateHero(
+        hero: upgradedHero,
+      );
+
+      //Atualiza o herói na lista local:
+      final index =
+      squadHeroes.indexWhere(
+            (item) =>
+        item.id == upgradedHero.id,
+      );
+
+      if (index != -1) {
+        squadHeroes[index] =
+            upgradedHero;
+      }
+
+      if (!mounted) {
+        return;
+      }
+
+      //Guarda a recompensa:
+      setState(() {
+        missionSuccess = true;
+
+        rewardedHero =
+            upgradedHero;
+
+        rewardedAttribute =
+            attribute;
+
+        oldAttributeValue =
+            oldValue;
+
+        newAttributeValue =
+            newValue;
+
+        missionFinished = true;
+      });
+
+      //Exibe sucesso:
+      AwesomeDialog(
+        context: context,
+        dialogType:
+        DialogType.success,
+        animType:
+        AnimType.scale,
+        title:
+        'Missão concluída!',
+        desc:
+        'Seu esquadrão venceu a missão.\n\n'
+            '${upgradedHero.name} recebeu uma melhoria!\n'
+            '$attribute: $oldValue → $newValue',
+        btnOkText:
+        'Continuar',
+        btnOkOnPress: () {},
+      ).show();
+
+      return;
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    //Finaliza como derrota:
+    setState(() {
+      missionSuccess = false;
+      missionFinished = true;
+    });
+
+    //Exibe falha:
+    AwesomeDialog(
+      context: context,
+      dialogType:
+      DialogType.error,
+      animType:
+      AnimType.scale,
+      title:
+      'Missão fracassada',
+      desc:
+      'Seu esquadrão não venceu a maioria das rodadas.',
+      btnOkText:
+      'Continuar',
+      btnOkOnPress: () {},
+    ).show();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        //Título da tela:
+        //Título:
         title: const Text(
           'Missões',
         ),
@@ -447,52 +658,56 @@ class _MissionPageState extends State<MissionPage> {
     );
   }
 
-  //Monta o conteúdo da tela:
+  //Monta o conteúdo:
   Widget _buildContent() {
-    //Exibe o carregamento:
+    //Carregamento:
     if (isLoading) {
       return const Center(
-        child: CircularProgressIndicator(),
+        child:
+        CircularProgressIndicator(),
       );
     }
 
-    //Exibe erro:
+    //Erro:
     if (errorMessage != null) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(
+          padding:
+          const EdgeInsets.all(
             16,
           ),
           child: Text(
             'Erro ao carregar a missão.\n$errorMessage',
-            textAlign: TextAlign.center,
+            textAlign:
+            TextAlign.center,
           ),
         ),
       );
     }
 
-    //Exibe o resultado final:
+    //Resultado final:
     if (missionFinished) {
       return _buildMissionResult();
     }
 
-    //Exibe a missão:
+    //Missão em andamento:
     if (missionStarted) {
       return _buildMission();
     }
 
-    //Exibe a tela inicial:
+    //Início:
     return _buildMissionStart();
   }
 
-  //Monta a tela inicial:
+  //Monta o início:
   Widget _buildMissionStart() {
     final canStartMission =
         squadHeroes.length >= 5;
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(
+        padding:
+        const EdgeInsets.all(
           24,
         ),
         child: Column(
@@ -510,7 +725,8 @@ class _MissionPageState extends State<MissionPage> {
 
             Text(
               'Preparar Missão',
-              style: Theme.of(context)
+              style:
+              Theme.of(context)
                   .textTheme
                   .headlineSmall,
             ),
@@ -540,13 +756,16 @@ class _MissionPageState extends State<MissionPage> {
             ),
 
             SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
+              width:
+              double.infinity,
+              child:
+              ElevatedButton(
                 //Inicia a missão:
                 onPressed:
                 _startMission,
 
-                child: const Text(
+                child:
+                const Text(
                   'Iniciar missão',
                 ),
               ),
@@ -580,7 +799,7 @@ class _MissionPageState extends State<MissionPage> {
       );
     }
 
-    //Agentes ainda disponíveis:
+    //Agentes disponíveis:
     final availableHeroes =
     squadHeroes
         .where(
@@ -592,7 +811,8 @@ class _MissionPageState extends State<MissionPage> {
         .toList();
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(
+      padding:
+      const EdgeInsets.all(
         16,
       ),
       child: Column(
@@ -600,7 +820,8 @@ class _MissionPageState extends State<MissionPage> {
           //Rodada:
           Text(
             'Rodada $currentRound de $totalRounds',
-            style: Theme.of(context)
+            style:
+            Theme.of(context)
                 .textTheme
                 .headlineSmall,
           ),
@@ -620,10 +841,11 @@ class _MissionPageState extends State<MissionPage> {
             height: 20,
           ),
 
-          //Atributo dominante:
+          //Atributo:
           Card(
             child: Padding(
-              padding: const EdgeInsets.all(
+              padding:
+              const EdgeInsets.all(
                 16,
               ),
               child: Row(
@@ -640,7 +862,8 @@ class _MissionPageState extends State<MissionPage> {
 
                   Text(
                     'Atributo: $dominantAttribute',
-                    style: Theme.of(context)
+                    style:
+                    Theme.of(context)
                         .textTheme
                         .titleMedium,
                   ),
@@ -655,7 +878,8 @@ class _MissionPageState extends State<MissionPage> {
 
           Text(
             'Inimigo',
-            style: Theme.of(context)
+            style:
+            Theme.of(context)
                 .textTheme
                 .titleLarge,
           ),
@@ -667,7 +891,8 @@ class _MissionPageState extends State<MissionPage> {
           //Inimigo:
           if (enemyHero != null)
             HeroCard(
-              hero: enemyHero!,
+              hero:
+              enemyHero!,
             ),
 
           const SizedBox(
@@ -676,7 +901,8 @@ class _MissionPageState extends State<MissionPage> {
 
           Text(
             'Escolha seu agente',
-            style: Theme.of(context)
+            style:
+            Theme.of(context)
                 .textTheme
                 .titleLarge,
           ),
@@ -713,19 +939,23 @@ class _MissionPageState extends State<MissionPage> {
     );
   }
 
-  //Monta o resultado final:
+  //Monta o resultado:
   Widget _buildMissionResult() {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(
+      child: SingleChildScrollView(
+        padding:
+        const EdgeInsets.all(
           24,
         ),
         child: Column(
           mainAxisAlignment:
           MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.flag,
+            Icon(
+              missionSuccess
+                  ? Icons
+                  .emoji_events
+                  : Icons.close,
               size: 80,
             ),
 
@@ -734,8 +964,11 @@ class _MissionPageState extends State<MissionPage> {
             ),
 
             Text(
-              'Missão finalizada',
-              style: Theme.of(context)
+              missionSuccess
+                  ? 'Missão concluída!'
+                  : 'Missão fracassada',
+              style:
+              Theme.of(context)
                   .textTheme
                   .headlineSmall,
             ),
@@ -744,6 +977,7 @@ class _MissionPageState extends State<MissionPage> {
               height: 24,
             ),
 
+            //Resumo:
             Text(
               'Vitórias: $wins',
             ),
@@ -756,14 +990,67 @@ class _MissionPageState extends State<MissionPage> {
               'Empates: $draws',
             ),
 
+            //Recompensa:
+            if (missionSuccess &&
+                rewardedHero != null &&
+                rewardedAttribute != null) ...[
+              const SizedBox(
+                height: 24,
+              ),
+
+              const Text(
+                'Recompensa',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight:
+                  FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(
+                height: 12,
+              ),
+
+              Text(
+                '${rewardedHero!.name} recebeu +1 em $rewardedAttribute',
+                textAlign:
+                TextAlign.center,
+              ),
+
+              const SizedBox(
+                height: 8,
+              ),
+
+              Text(
+                '$oldAttributeValue → $newAttributeValue',
+              ),
+            ],
+
             const SizedBox(
-              height: 24,
+              height: 32,
             ),
 
-            const Text(
-              'A recompensa da missão será adicionada na próxima etapa.',
-              textAlign:
-              TextAlign.center,
+            SizedBox(
+              width:
+              double.infinity,
+              child:
+              ElevatedButton(
+                //Inicia outra missão:
+                onPressed: () {
+                  setState(() {
+                    missionStarted =
+                    false;
+
+                    missionFinished =
+                    false;
+                  });
+                },
+
+                child:
+                const Text(
+                  'Voltar',
+                ),
+              ),
             ),
           ],
         ),

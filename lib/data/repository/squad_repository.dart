@@ -21,4 +21,9 @@ abstract class SquadRepository {
   Future<void> dismiss({
     required int heroId,
   });
+
+  //Atualiza os dados de um agente:
+  Future<void> updateHero({
+    required Hero hero,
+  });
 }
