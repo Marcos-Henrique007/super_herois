@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'agents_page.dart';
 import 'daily_contract_page.dart';
 import 'squad_page.dart';
+import 'mission_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({
@@ -76,6 +77,27 @@ class HomePage extends StatelessWidget {
               },
               child: const Text(
                 'Meu Esquadrão',
+              ),
+            ),
+
+            const SizedBox(
+              height: 16,
+            ),
+
+            ElevatedButton(
+              //Abre a tela de missões:
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                    const MissionPage(),
+                  ),
+                );
+              },
+
+              child: const Text(
+                'Missões',
               ),
             ),
           ],
