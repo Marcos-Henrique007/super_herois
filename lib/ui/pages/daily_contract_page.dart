@@ -9,8 +9,7 @@ import '../../data/repository/hero_repository_impl.dart';
 import '../../data/repository/squad_repository_impl.dart';
 import '../../domain/hero.dart';
 
-class DailyContractPage
-    extends StatefulWidget {
+class DailyContractPage extends StatefulWidget {
   const DailyContractPage({
     super.key,
   });
@@ -28,9 +27,6 @@ class _DailyContractPageState
 
   static const String _heroDateKey =
       'daily_hero_date';
-
-  //Quantidade de heróis:
-  static const int _totalHeroes = 563;
 
   //Repositório dos heróis:
   late final HeroRepositoryImpl heroesRepo;
@@ -74,6 +70,32 @@ class _DailyContractPageState
     _loadDailyHero();
   }
 
+  //Sorteia um herói que realmente existe:
+  Future<Hero> _drawHero() async {
+    //Busca o catálogo salvo:
+    final heroes =
+    await heroesRepo.getHeroes(
+      page: 1,
+      limit: 1000,
+    );
+
+    //Verifica se existem heróis:
+    if (heroes.isEmpty) {
+      throw Exception(
+        'Nenhum herói disponível.',
+      );
+    }
+
+    //Sorteia uma posição da lista:
+    final index =
+    Random().nextInt(
+      heroes.length,
+    );
+
+    //Retorna um herói real:
+    return heroes[index];
+  }
+
   //Carrega ou sorteia o herói:
   Future<void> _loadDailyHero() async {
     try {
@@ -88,30 +110,43 @@ class _DailyContractPageState
               .split('T')
               .first;
 
-      //Dados salvos:
+      //Data salva:
       final savedDate =
       preferences.getString(
         _heroDateKey,
       );
 
+      //ID salvo:
       final savedHeroId =
       preferences.getInt(
         _heroIdKey,
       );
 
-      int heroId;
+      Hero hero;
 
-      //Mantém o sorteio do dia:
+      //Mantém o herói sorteado no mesmo dia:
       if (savedDate == today &&
           savedHeroId != null) {
-        heroId = savedHeroId;
+        try {
+          //Busca o herói salvo:
+          hero =
+          await heroesRepo
+              .getHeroById(
+            id: savedHeroId,
+          );
+        } catch (e) {
+          //Corrige um ID antigo inválido:
+          hero = await _drawHero();
+
+          //Salva o novo ID válido:
+          await preferences.setInt(
+            _heroIdKey,
+            hero.id,
+          );
+        }
       } else {
         //Sorteia um novo herói:
-        heroId =
-            Random().nextInt(
-              _totalHeroes,
-            ) +
-                1;
+        hero = await _drawHero();
 
         //Salva a data:
         await preferences.setString(
@@ -122,15 +157,9 @@ class _DailyContractPageState
         //Salva o ID:
         await preferences.setInt(
           _heroIdKey,
-          heroId,
+          hero.id,
         );
       }
-
-      //Busca o herói:
-      final hero =
-      await heroesRepo.getHeroById(
-        id: heroId,
-      );
 
       //Verifica se já foi recrutado:
       final recruited =
@@ -147,12 +176,14 @@ class _DailyContractPageState
         dailyHero = hero;
         isRecruited = recruited;
         isLoading = false;
+        errorMessage = null;
       });
     } catch (e) {
       if (!mounted) {
         return;
       }
 
+      //Exibe o erro:
       setState(() {
         errorMessage = e.toString();
         isLoading = false;
@@ -162,11 +193,13 @@ class _DailyContractPageState
 
   //Recruta o agente:
   Future<void> _recruitHero() async {
+    //Evita operações inválidas:
     if (dailyHero == null ||
         isRecruiting) {
       return;
     }
 
+    //Inicia o carregamento:
     setState(() {
       isRecruiting = true;
     });
@@ -178,6 +211,7 @@ class _DailyContractPageState
         heroId: dailyHero!.id,
       );
 
+      //Caso já esteja recrutado:
       if (recruited) {
         if (!mounted) {
           return;
@@ -200,11 +234,12 @@ class _DailyContractPageState
         return;
       }
 
-      //Verifica o limite:
+      //Conta os integrantes:
       final count =
       await squadRepo
           .getSquadCount();
 
+      //Verifica o limite:
       if (count >= 15) {
         if (!mounted) {
           return;
@@ -226,7 +261,7 @@ class _DailyContractPageState
         return;
       }
 
-      //Recruta:
+      //Recruta o agente:
       await squadRepo.recruit(
         hero: dailyHero!,
       );
@@ -235,11 +270,13 @@ class _DailyContractPageState
         return;
       }
 
+      //Atualiza o estado:
       setState(() {
         isRecruited = true;
         isRecruiting = false;
       });
 
+      //Exibe a confirmação:
       ScaffoldMessenger.of(context)
           .showSnackBar(
         SnackBar(
@@ -253,10 +290,12 @@ class _DailyContractPageState
         return;
       }
 
+      //Finaliza o carregamento:
       setState(() {
         isRecruiting = false;
       });
 
+      //Exibe o erro:
       ScaffoldMessenger.of(context)
           .showSnackBar(
         SnackBar(
@@ -274,7 +313,8 @@ class _DailyContractPageState
       int value,
       ) {
     return Container(
-      padding: const EdgeInsets.symmetric(
+      padding:
+      const EdgeInsets.symmetric(
         horizontal: 10,
         vertical: 6,
       ),
@@ -300,7 +340,8 @@ class _DailyContractPageState
     return Card(
       elevation: 5,
       child: Padding(
-        padding: const EdgeInsets.all(
+        padding:
+        const EdgeInsets.all(
           16,
         ),
         child: Column(
@@ -319,6 +360,7 @@ class _DailyContractPageState
                 height: 280,
                 fit: BoxFit.cover,
 
+                //Carregamento:
                 placeholder:
                     (context, url) =>
                 const SizedBox(
@@ -330,8 +372,8 @@ class _DailyContractPageState
                   ),
                 ),
 
-                errorWidget:
-                    (
+                //Erro:
+                errorWidget: (
                     context,
                     url,
                     error,
@@ -410,17 +452,20 @@ class _DailyContractPageState
       ) {
     return Scaffold(
       appBar: AppBar(
+        //Título:
         title: const Text(
           'Contrato Diário',
         ),
       ),
 
+      //Conteúdo:
       body: _buildContent(),
     );
   }
 
   //Monta a tela:
   Widget _buildContent() {
+    //Carregamento:
     if (isLoading) {
       return const Center(
         child:
@@ -428,6 +473,7 @@ class _DailyContractPageState
       );
     }
 
+    //Erro:
     if (errorMessage != null) {
       return Center(
         child: Padding(
@@ -436,7 +482,8 @@ class _DailyContractPageState
             16,
           ),
           child: Text(
-            'Erro ao carregar o contrato.\n$errorMessage',
+            'Erro ao carregar o contrato.\n'
+                '$errorMessage',
             textAlign:
             TextAlign.center,
           ),
@@ -444,6 +491,7 @@ class _DailyContractPageState
       );
     }
 
+    //Herói encontrado:
     if (dailyHero != null) {
       return SingleChildScrollView(
         padding:
@@ -474,7 +522,7 @@ class _DailyContractPageState
               height: 20,
             ),
 
-            //Recrutamento:
+            //Botão de recrutamento:
             SizedBox(
               width:
               double.infinity,
@@ -509,6 +557,7 @@ class _DailyContractPageState
       );
     }
 
+    //Nenhum herói:
     return const Center(
       child: Text(
         'Nenhum agente encontrado.',
